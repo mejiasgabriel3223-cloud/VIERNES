@@ -2,22 +2,23 @@ import threading
 import time
 import keyboard
 
-# Importamos nuestros tres módulos independientes
+# Importamos nuestros tres módulos anatómicos independientes
 from modulos.cerebro import Cerebro
 from modulos.oidos import Oidos
-from modulos.voz import Voz
+from modulos.boca import Boca
 
-class JarvisSystem:
+
+class ViernesSystem:
     def __init__(self):
-        print("[Sistema]: Inicializando protocolos de J.A.R.V.I.S...")
+        print("[Sistema]: Inicializando protocolos de VIERNES...")
         self.cerebro = Cerebro()
         self.oidos = Oidos()
-        self.voz = Voz()
+        self.boca = Boca()
         self._bloqueo_despertar = threading.Lock()
         print("[Sistema]: Todos los subsistemas en línea.")
 
     def despertar(self):
-        """Rutina que se ejecuta al presionar la combinacion de teclas"""
+        """Rutina que se ejecuta al presionar la combinación de teclas"""
         if not self._bloqueo_despertar.acquire(blocking=False):
             print("[Sistema]: Ya estoy atendiendo otra solicitud.")
             return
@@ -29,18 +30,14 @@ class JarvisSystem:
             texto_usuario = self.oidos.grabar_y_transcribir()
 
             if texto_usuario:
-                print(f"[Tú]: {texto_usuario}")
+                print(f"[Gabriel]: {texto_usuario}")
 
-                # 2. El cerebro procesa el texto usando el contexto de tu vida
-                self.voz.iniciar_stream()
-                respuesta_ia = self.cerebro.generar_respuesta(
-                    texto_usuario,
-                    al_recibir=self.voz.agregar_fragmento,
-                )
-                print(f"[J.A.R.V.I.S.]: {respuesta_ia}")
+                # 2. El cerebro procesa el texto
+                respuesta_ia = self.cerebro.generar_respuesta(texto_usuario)
+                print(f"[VIERNES]: {respuesta_ia}")
 
-                # La voz termina de reproducir los fragmentos recibidos.
-                self.voz.finalizar_stream()
+                # 3. La boca sintetiza y reproduce la respuesta mediante Piper
+                self.boca.hablar(respuesta_ia)
 
             print("\n[Sistema]: En espera. Presiona [Ctrl + Alt + J] para hablar.")
         finally:
@@ -48,26 +45,30 @@ class JarvisSystem:
 
     def iniciar_demonio(self):
         """Mantiene el sistema corriendo de forma silenciosa en segundo plano"""
-        # Configuramos el atajo de teclado global (puedes cambiarlo si prefieres otros botones)
-        keyboard.add_hotkey('ctrl+alt+j', self.despertar)
-        
+        keyboard.add_hotkey("ctrl+alt+j", self.despertar)
+
         # Bucle pasivo que consume 0% de CPU
         while True:
             time.sleep(1)
 
+
+# Alias para retrocompatibilidad
+JarvisSystem = ViernesSystem
+
+
 if __name__ == "__main__":
-    jarvis = JarvisSystem()
+    viernes = ViernesSystem()
     print("\n----------------------------------------------------")
-    print(" J.A.R.V.I.S. oculto en segundo plano.")
+    print(" VIERNES oculta en segundo plano.")
     print(" Atajo activo: Presiona [Ctrl + Alt + J] para hablar.")
     print("----------------------------------------------------")
-    
-    # Lanzamos el proceso en un hilo secundario tipo "Demón" (como un servicio de Discord)
-    hilo_escucha = threading.Thread(target=jarvis.iniciar_demonio, daemon=True)
+
+    # Lanzamos el proceso en un hilo secundario tipo Demonio
+    hilo_escucha = threading.Thread(target=viernes.iniciar_demonio, daemon=True)
     hilo_escucha.start()
-    
+
     # Mantiene la consola principal viva
     try:
         hilo_escucha.join()
     except KeyboardInterrupt:
-        print("\n[Sistema]: Apagando J.A.R.V.I.S. Hasta luego, señor.")
+        print("\n[Sistema]: Apagando VIERNES. Hasta luego, Jefe.")

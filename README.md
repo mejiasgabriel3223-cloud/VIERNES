@@ -6,7 +6,7 @@ Edita `config.json` para cambiar las opciones agrupadas por sección:
 
 - `configuracion.ollama`: host y modelo local.
 - `configuracion.asistente`: personalidad y directrices del prompt.
-- `configuracion.contexto_usuario`: información que se incluye en el prompt; puedes editarla o quitar campos.
+- `configuracion.contexto_usuario`: información contextual del usuario que se incluye en el prompt para adaptar la ayuda; debes mantenerla separada de la identidad del asistente y evitar convertir esos datos en información personal propia.
 - `configuracion.voz`: voz y velocidad de Edge TTS, además del idioma y activación de la voz local de Windows como respaldo.
 
 Las variables `OLLAMA_HOST` y `OLLAMA_MODEL` del archivo `.env` tienen prioridad sobre los valores de Ollama en `config.json`.
