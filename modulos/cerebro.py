@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import atexit
+import json
 import requests
 import ollama
 from dotenv import load_dotenv
@@ -44,14 +45,15 @@ class Cerebro:
         # Enciende el motor automáticamente al instanciar la clase
         iniciar_motor()
 
-        configuracion = cargar_configuracion()["configuracion"]
+        configuracion_completa = cargar_configuracion()
+        configuracion = configuracion_completa.get("configuracion", {})
         configuracion_ollama = configuracion.get("ollama", {})
         asistente = configuracion.get("asistente", {})
 
         self.host = os.getenv("OLLAMA_HOST", configuracion_ollama.get("host", "http://127.0.0.1:11434"))
         self.cliente = ollama.Client(host=self.host)
 
-        # Variables de configuración para el Enrutador Cognitivo
+        # Variables de configuración y lectura directa de los prompts desde el JSON
         self.config = {
             "host": self.host,
             "modelo_rapido": os.getenv(
@@ -66,9 +68,14 @@ class Cerebro:
                 "viernes_system_prompt",
                 configuracion.get(
                     "viernes_system_prompt",
-                    "Eres VIERNES. Tu único usuario es Gabriel. Eres directa y seca. PROHIBIDO usar asteriscos, negritas, guiones o listas. Responde siempre en un solo párrafo corto de máximo 2 oraciones."
+                    "Eres VIERNES. Tu único usuario es Gabriel. Eres directa y seca."
                 )
             ),
+            # Se lee el router_prompt directamente desde la raíz de "configuracion" en el JSON
+            "router_prompt": configuracion.get(
+                "router_prompt", 
+                "Responde en JSON con {'accion': 'ninguna', 'parametro': ''}"
+            )
         }
 
     def _requiere_razonamiento(self, texto):
@@ -87,6 +94,36 @@ class Cerebro:
         ]
         texto_lower = (texto or "").lower()
         return any(palabra in texto_lower for palabra in palabras_clave)
+
+    def analizar_intencion(self, texto_usuario: str) -> dict:
+        """
+        Enrutador ultrarrápido (GPU): extrae la acción multimedia y el parámetro limpio 
+        utilizando el prompt leído directamente desde el archivo config.json.
+        """
+        prompt_sistema = self.config["router_prompt"]
+        
+        try:
+            payload = {
+                "model": self.config["modelo_rapido"],
+                "prompt": texto_usuario,
+                "system": prompt_sistema,
+                "stream": False,
+                "format": "json",  # Fuerza la salida en JSON puro nativo de Ollama
+                "options": {"temperature": 0.0}
+            }
+
+            url = f"{self.host}/api/generate"
+            respuesta = requests.post(url, json=payload, timeout=10)
+
+            if respuesta.status_code == 200:
+                contenido_json = respuesta.json().get("response", "{}")
+                return json.loads(contenido_json)
+            else:
+                return {"accion": "ninguna", "parametro": ""}
+
+        except Exception as e:
+            print(f"[ERROR CEREBRO JSON]: {e}")
+            return {"accion": "ninguna", "parametro": ""}
 
     def generar_respuesta(self, texto_usuario, al_recibir=None):
         """Envía el texto a la API de Ollama usando el enrutador cognitivo (GPU vs CPU)."""
@@ -137,4 +174,11 @@ if __name__ == "__main__":
         entrada = input("Gabriel: ")
         if entrada.lower() == "salir":
             break
-        print(f"VIERNES: {viernes_cerebro.generar_respuesta(entrada)}")
+        
+        intencion = viernes_cerebro.analizar_intencion(entrada)
+        print(f"JSON Detectado: {intencion}")
+        
+        if intencion.get("accion") == "ninguna":
+            print(f"VIERNES: {viernes_cerebro.generar_respuesta(entrada)}")
+        else:
+            print(f"VIERNES (Acción): Ejecutaría {intencion['accion']} para '{intencion['parametro']}'")

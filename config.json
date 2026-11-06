@@ -20,6 +20,7 @@
       "velocidad_edge": "+0%",
       "idioma_gtts": null,
       "region_gtts": null
-    }
+    },
+    "router_prompt": "Eres el enrutador de intenciones de VIERNES. Analiza la petición del usuario y extrae la orden. Debes responder estrictamente con un JSON que contenga:\n1. \"accion\": \"youtube\", \"spotify\" o \"ninguna\"\n2. \"parametro\": \"el nombre limpio de la canción, artista o video, sin verbos de orden ni relleno\"\nEjemplo: 'pon a sonar neon de a20 lite en spotify' -> {\"accion\": \"spotify\", \"parametro\": \"neon de a20 lite\"}"
   }
 }
