@@ -13,7 +13,8 @@ class ViernesSystem:
     def __init__(self):
         print("[Sistema]: Inicializando protocolos de VIERNES...")
         self.cerebro = Cerebro()
-        self.oidos = Oidos()
+        self.oidos = Oidos()  # Módulo único de procesamiento de voz (Whisper - Español/Inglés)
+        self.timpano = self.oidos  # Preservado por compatibilidad
         self.boca = Boca()
         self.acciones = Acciones() 
         self._bloqueo_sistema = threading.Lock()
@@ -45,20 +46,23 @@ class ViernesSystem:
             self.boca.hablar(respuesta_ia)
 
     def escuchar_voz(self):
-        """Activado por [Ctrl + Alt + J] s (Micrófono)."""
+        """Activado por [Ctrl + Alt + J] (Micrófono con Whisper -> Instrucción de teclado -> Router)."""
         if not self._bloqueo_sistema.acquire(blocking=False):
             print("[Sistema]: El sistema ya está ocupado atendiendo una solicitud.")
             return
 
         try:
-            print("\n[Escuchando por micrófono...]")
-            texto_usuario = self.oidos.grabar_y_transcribir()
+            print("\n[Oídos]: Escuchando orden por micrófono (Whisper)...")
+            texto_usuario = self.oidos.escuchar_y_transcribir()
             if texto_usuario:
-                print(f"[(Voz)]: {texto_usuario}")
+                print(f"[(Voz con Whisper)]: {texto_usuario}")
+                # Entrega de la orden como instrucción de teclado al sistema
+                print("[Oídos]: Entregando orden como instrucción de teclado...")
+                self.oidos.entregar_como_teclado(texto_usuario, pulsar_enter=False)
                 self.procesar_y_responder(texto_usuario)
         finally:
             self._bloqueo_sistema.release()
-            print("\n[Sistema]: En espera. [Ctrl + Alt + J] Voz | [Ctrl + Alt + K] Texto.")
+            print("\n[Sistema]: En espera. [Ctrl + Alt + J] Comandos por voz (Whisper) | [Ctrl + Alt + K] Comandos por texto.")
 
     def activar_texto(self):
         """Activado por [Ctrl + Alt + K] (Escribir en consola)."""
@@ -81,10 +85,10 @@ class ViernesSystem:
                 self.procesar_y_responder(texto_usuario)
         finally:
             self._bloqueo_sistema.release()
-            print("\n[Sistema]: En espera. [Ctrl + Alt + J] Voz | [Ctrl + Alt + K] Texto.")
+            print("\n[Sistema]: En espera. [Ctrl + Alt + J] Comandos por voz (Whisper) | [Ctrl + Alt + K] Comandos por texto.")
 
     def iniciar_demonios(self):
-        """Registra ambos atajos de teclado globales en segundo plano."""
+        """Registra los atajos de teclado globales en segundo plano."""
         keyboard.add_hotkey("ctrl+alt+j", self.escuchar_voz)
         keyboard.add_hotkey("ctrl+alt+k", self.activar_texto)
 
@@ -98,9 +102,9 @@ JarvisSystem = ViernesSystem
 if __name__ == "__main__":
     viernes = ViernesSystem()
     print("\n----------------------------------------------------")
-    print(" VIERNES Híbrida con Manoderecha activa.")
-    print(" -  (Micrófono): Presionan [Ctrl + Alt + J]")
-    print(" - (Texto por atajo): Presionas [Ctrl + Alt + K]")
+    print(" VIERNES Híbrida con Whisper (Auditivo Unificado) y Manoderecha.")
+    print(" - [Ctrl + Alt + J] : Comandos por voz dictada (Whisper - Español/Inglés)")
+    print(" - [Ctrl + Alt + K] : Comandos por texto mediante teclado")
     print("----------------------------------------------------")
 
     try:

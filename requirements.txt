@@ -6,3 +6,7 @@ SpeechRecognition
 ollama
 pyttsx3
 gTTS
+pywhatkit
+pyautogui
+openai-whisper
+numpy
